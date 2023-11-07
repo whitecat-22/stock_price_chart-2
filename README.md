@@ -53,8 +53,8 @@
 
 - Slackへ通知した結果：
 
-![https://github.com/whitecat-22/stock_price_chart-2/blob/main/slack_2023-11-05.png](https://github.com/whitecat-22/stock_price_chart-2/blob/main/slack_2023-11-05.png)
+![https://github.com/whitecat-22/stock_price_chart-2/blob/main/slack_2023-11-07.png](https://github.com/whitecat-22/stock_price_chart-2/blob/main/slack_2023-11-07.png)
 
 - X(twitter)へ通知した結果：
 
-![https://github.com/whitecat-22/stock_price_chart-2/blob/main/twitter_2023-11-05.png](https://github.com/whitecat-22/stock_price_chart-2/blob/main/twitter_2023-11-05.png)
+![https://github.com/whitecat-22/stock_price_chart-2/blob/main/twitter_2023-11-07.png](https://github.com/whitecat-22/stock_price_chart-2/blob/main/twitter_2023-11-07.png)
