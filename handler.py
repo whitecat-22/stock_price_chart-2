@@ -18,6 +18,7 @@ from yahoo_finance_api2.exceptions import YahooFinanceError
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import plotly.io as pio
 from dotenv import load_dotenv
 #from notifiers import slack
 #from notifiers import twitter
@@ -25,7 +26,7 @@ import tweepy
 from decimal import Decimal, ROUND_HALF_UP
 from slack_sdk.errors import SlackApiError
 from slack_sdk import WebClient
-
+import time
 import json
 import logging
 
@@ -128,7 +129,7 @@ class Slack():
         text = f"本日は{self.date.strftime('%Y年%m月%d日')}です。\n" \
                f"取得可能な最新日付の株価情報をお知らせします。 \n\n"\
                f"*銘柄*  {str(stock_code)}\n" \
-               f"*日付*  {str(ohlcv['datetime'])}\n" \
+               f"*日付*  {ohlcv['date']}\n" \
                f"*始値*  {str(open_)}\n" \
                f"*高値*  {str(high_)}\n" \
                f"*安値*  {str(low_)}\n" \
@@ -205,7 +206,7 @@ class Twitter():
         text = f"本日は{self.date.strftime('%Y年%m月%d日')}です。\n" \
                f"取得可能な最新日付の株価情報をお知らせします。 \n\n"\
                f"銘柄  {str(stock_code)}\n" \
-               f"日付  {str(ohlcv['datetime'])}\n" \
+               f"日付  {ohlcv['date']}\n" \
                f"始値  {str(open_)}\n" \
                f"高値  {str(high_)}\n" \
                f"安値  {str(low_)}\n" \
@@ -396,10 +397,16 @@ def generate_csv_from_dataframe():
 
     df = pd.DataFrame(symbol_data)
     df["datetime"] = pd.to_datetime(df.timestamp, unit="ms")
+    df["date"] = df["datetime"].dt.strftime("%Y-%m-%d")
     # APIで取得したデータを一旦CSVファイルにする
     df1 = df.copy()
     df1 = df1.sort_values(by="datetime", ascending=False)
     df1.to_csv(f"/tmp/{today}.csv")
+
+    wk_date = df1.iloc[0]["datetime"].strftime("%Y-%m-%d")
+    wk_today = today.strftime("%Y-%m-%d")
+    if wk_date == wk_today:
+        is_today = "Y"
 
     additional_dates = pd.date_range(
         start=df["datetime"].max()+datetime.timedelta(days=1),
@@ -458,13 +465,7 @@ def generate_csv_from_dataframe():
     d_obs = [d.strftime("%Y-%m-%d") for d in df['datetime']]
     d_breaks = [d for d in d_all.strftime("%Y-%m-%d").tolist() if d not in d_obs]
 
-    wk_date = df['datetime'][0].strftime("%Y-%m-%d")
-    wk_today = today.strftime("%Y-%m-%d")
-
-    if wk_date == wk_today:
-        is_today = "Y"
-
-    return [df, d_breaks]
+    return [df, d_breaks, is_today]
 
 def lambdahandler(event, context):
     global is_today
@@ -481,20 +482,33 @@ def lambdahandler(event, context):
     result = generate_csv_from_dataframe()
     df = result[0]
     d_breaks = result[1]
+    is_today = result[2]
 
     if is_today == "Y":
 
-        generate_stock_chart_image(df, d_breaks)
+        pio.kaleido.scope.chromium_args += ("--single-process",)
+        cold = True
+        while cold:
+            try:
+                generate_stock_chart_image(df, d_breaks)
+                cold = False
+            except Exception as ex:
+                print(f"WARMUP EXCEPTION {ex}")
 
-        with open(f"/tmp/{today}.csv", "r", encoding="utf-8") as file:
-            # Skip header row
-            reader = csv.reader(file)
-            header = next(reader)
-            for i, row in enumerate(csv.DictReader(file, header)):
-                # Send only the most recent data to Slack notification
-                if i == 0:
-                    Slack(today, row).post()
-                    Twitter(today, row).post()
+            if cold:
+                time.sleep(10)
+
+            generate_stock_chart_image(df, d_breaks)
+
+            with open(f"/tmp/{today}.csv", "r", encoding="utf-8") as file:
+                # Skip header row
+                reader = csv.reader(file)
+                header = next(reader)
+                for i, row in enumerate(csv.DictReader(file, header)):
+                    # Send only the most recent data to Slack notification
+                    if i == 0:
+                        Slack(today, row).post()
+                        Twitter(today, row).post()
 
     return {
         "statusCode": 200,
