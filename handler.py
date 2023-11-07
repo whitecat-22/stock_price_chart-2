@@ -253,16 +253,16 @@ def generate_stock_chart_image(df, d_breaks):
 
     # ローソク足：Candlestick
     fig.add_trace(
-        go.Candlestick(x=dataframe["datetime"], open=dataframe["open"], high=dataframe["high"], low=dataframe["low"], close=dataframe["close"], name="株価"),
+        go.Candlestick(x=dataframe["datetime"], open=dataframe["open"], high=dataframe["high"], low=dataframe["low"], close=dataframe["close"], name="Prices"),
         row=1, col=1
     )
 
     # 一目均衡表
-    fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["base_line"], name="基準線", mode="lines", line=dict(color="purple")), row=1, col=1)
-    fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["conversion_line"], name="転換線", mode="lines", line=dict(color="orange")), row=1, col=1)
-    fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["leading_span1"], name="先行スパン1", mode="lines", fill=None, line=dict(width=0, color="gray"), showlegend=False), row=1, col=1)
-    fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["leading_span2"], name="先行スパン2", mode="lines", fill='tonexty', line=dict(width=0, color="gray"), showlegend=False), row=1, col=1)
-    fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["lagging_span"], name="遅行線", mode="lines", line=dict(color="turquoise")), row=1, col=1)
+    fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["base_line"], name="BaseLine", mode="lines", line=dict(color="purple")), row=1, col=1)
+    fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["conversion_line"], name="Conv.Line", mode="lines", line=dict(color="orange")), row=1, col=1)
+    fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["leading_span1"], name="AdvanceSpan1", mode="lines", fill=None, line=dict(width=0, color="gray"), showlegend=False), row=1, col=1)
+    fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["leading_span2"], name="AdvanceSpan2", mode="lines", fill='tonexty', line=dict(width=0, color="gray"), showlegend=False), row=1, col=1)
+    fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["lagging_span"], name="LaggingSpan", mode="lines", line=dict(color="turquoise")), row=1, col=1)
 
     # SMA
     fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["SMA25"], name="SMA25", mode="lines", line=dict(color="magenta")), row=1, col=1)
@@ -313,14 +313,14 @@ def generate_stock_chart_image(df, d_breaks):
 
     # 出来高
     fig.add_trace(
-        go.Bar(x=dataframe["datetime"], y=dataframe["volume"], name="出来高", marker_color="green"),
+        go.Bar(x=dataframe["datetime"], y=dataframe["volume"], name="Volume", marker_color="green"),
         row=4, col=1
     )
 
     # Layout
     fig.update_layout(
         title={
-            "text": f"{stock_code}の日足チャート",
+            "text": f"Daily chart of {stock_code}",
             "y":0.9,
             "x":0.5,
         },
@@ -328,10 +328,10 @@ def generate_stock_chart_image(df, d_breaks):
     )
 
     # y軸名を定義
-    fig.update_yaxes(title_text="株価", row=1, col=1, separatethousands=True)
+    fig.update_yaxes(title_text="Prices", row=1, col=1, separatethousands=True)
     fig.update_yaxes(title_text="MACD", row=2, col=1, separatethousands=True)
     fig.update_yaxes(title_text="RSI", row=3, col=1, separatethousands=True)
-    fig.update_yaxes(title_text="出来高", row=4, col=1, separatethousands=True)
+    fig.update_yaxes(title_text="Vol", row=4, col=1, separatethousands=True)
 
     # 不要な日付を非表示にする
     fig.update_xaxes(
