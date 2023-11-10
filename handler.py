@@ -13,6 +13,10 @@ import datetime
 import os
 from os.path import join, dirname
 import sys
+import time
+import json
+import logging
+from decimal import Decimal, ROUND_HALF_UP
 from yahoo_finance_api2 import share
 from yahoo_finance_api2.exceptions import YahooFinanceError
 import pandas as pd
@@ -23,12 +27,8 @@ from dotenv import load_dotenv
 #from notifiers import slack
 #from notifiers import twitter
 import tweepy
-from decimal import Decimal, ROUND_HALF_UP
 from slack_sdk.errors import SlackApiError
 from slack_sdk import WebClient
-import time
-import json
-import logging
 
 # settins for logging
 logger = logging.getLogger()
@@ -230,10 +230,12 @@ class Twitter():
             for filename in file_names:
                 res = api.media_upload(filename=filename)
                 media_ids.append(res.media_id)
-                res2 = api.create_media_metadata(res.media_id, title)
+                api.create_media_metadata(res.media_id, title)
             # tweet with multiple images
-            client_t.create_tweet(text=self.text,
-                              media_ids=media_ids)
+            client_t.create_tweet(
+                text=self.text,
+                media_ids=media_ids,
+            )
         except Exception as e:
             print(e)
 
@@ -340,7 +342,7 @@ def generate_stock_chart_image(df, d_breaks):
     )
 
     fig.update(layout_xaxis_rangeslider_visible=False)
-    #fig.show()
+    # fig.show()
     fig.write_image(f"/tmp/{today}.jpg")
 
     return dataframe
@@ -467,6 +469,7 @@ def generate_csv_from_dataframe():
 
     return [df, d_breaks, is_today]
 
+
 def lambdahandler(event, context):
     global is_today
     """
@@ -497,8 +500,6 @@ def lambdahandler(event, context):
 
             if cold:
                 time.sleep(10)
-
-            generate_stock_chart_image(df, d_breaks)
 
             with open(f"/tmp/{today}.csv", "r", encoding="utf-8") as file:
                 # Skip header row
