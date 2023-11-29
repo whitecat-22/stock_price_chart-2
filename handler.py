@@ -1,12 +1,10 @@
 try:
-    #from notifiers import unzip_requirements
+    # from notifiers import unzip_requirements
     import unzip_requirements
 except ImportError:
     print("Import Error - unzip_requirements")
-    pass
 except Exception as e:
     print(e)
-    pass
 
 import csv
 import datetime
@@ -24,8 +22,9 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.io as pio
 from dotenv import load_dotenv
-#from notifiers import slack
-#from notifiers import twitter
+import dateutil.relativedelta
+# from notifiers import slack
+# from notifiers import twitter
 import tweepy
 from slack_sdk.errors import SlackApiError
 from slack_sdk import WebClient
@@ -44,6 +43,7 @@ is_today = "N"
 
 # Get today"s date for getting the stock price and csv&image filename
 today = datetime.date.today()
+two_year_ago = today - dateutil.relativedelta.relativedelta(years=2)
 
 # tmp directory is present by default on Cloud Functions, so guard it
 if not os.path.isdir("/tmp"):
@@ -87,6 +87,7 @@ client_t = tweepy.Client(
     access_token_secret=ACCESS_TOKEN_SECRET,
 )
 
+
 class Slack():
     """
     Notification Class to configure the settings for the Slack API
@@ -111,9 +112,9 @@ class Slack():
             "datetime": "2020-12-29",
             "open": "7620",
             "high": "8070",
-			"low": "7610",
-			"close": "8060",
-			"volume": "823700"
+            "low": "7610",
+            "close": "8060",
+            "volume": "823700"
         }
         :return: String
         """
@@ -251,7 +252,7 @@ def generate_stock_chart_image(df, d_breaks):
     dataframe = dataframe.sort_values("datetime")
 
     # figを定義
-    fig = make_subplots(rows=4, cols=1, shared_xaxes=True, vertical_spacing=0.005, row_width=[0.1, 0.2, 0.2, 0.5])
+    fig = make_subplots(rows=5, cols=1, shared_xaxes=True, vertical_spacing=0.005, row_width=[0.1, 0.1, 0.2, 0.2, 0.5])
 
     # ローソク足：Candlestick
     fig.add_trace(
@@ -268,6 +269,8 @@ def generate_stock_chart_image(df, d_breaks):
 
     # SMA
     fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["SMA25"], name="SMA25", mode="lines", line=dict(color="magenta")), row=1, col=1)
+    # fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["SMA50"], name="SMA50", mode="lines", line=dict(color="blue")), row=1, col=1)
+    fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["SMA200"], name="SMA200", mode="lines", line=dict(color="green")), row=1, col=1)
 
     # ボリンジャーバンド
     fig.add_trace(
@@ -301,6 +304,15 @@ def generate_stock_chart_image(df, d_breaks):
     # fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["2lower"], mode="lines", fill=None, line=dict(width=0, color="lightblue"), showlegend=False), row=1, col=1)
     # fig.add_trace(go.Scatter(x=dataframe["datetime"], y=dataframe["3lower"], mode="lines", fill='tonexty', line=dict(width=0, color="lightblue"), showlegend=False), row=1, col=1)
 
+    # 買われすぎ、売られすぎサイン
+    # 25, s25 = dataframe["SMA25_dr"].mean(), dataframe["SMA25_dr"].std()
+    # m50, s50 = dataframe["SMA50_dr"].mean(), dataframe["SMA50_dr"].std()
+    # m00, s200 = dataframe["SMA200_dr"].mean(), dataframe["SMA200_dr"].std()
+    # 買われすぎ
+    # fig.add_trace(go.Scatter(x=dataframe[dataframe["SMA25_dr"]>(m25+(2*s25))]["datetime"], y=dataframe[dataframe["SMA25_dr"]>(m25+(2*s25))]["close"]*1.02, name="買われすぎ", mode="markers", marker_symbol="triangle-down", marker_size=5, marker_color="black"), row=1, col=1)
+    # 売られすぎ
+    # fig.add_trace(go.Scatter(x=dataframe[dataframe["SMA25_dr"]<(m25-(2*s25))]["datetime"], y=dataframe[dataframe["SMA25_dr"]<(m25-(2*s25))]["close"]*0.98, name="売られすぎ", mode="markers", marker_symbol="triangle-up", marker_size=5, marker_color="black"), row=1, col=1)
+
 
     # MACD
     # fig.add_trace(go.Scatter(x=dataframe.index, y=dataframe["MACD"], mode="lines", showlegend=False), row=2, col=1)
@@ -319,24 +331,42 @@ def generate_stock_chart_image(df, d_breaks):
         row=4, col=1
     )
 
+    # 乖離率
+    fig.add_trace(
+        go.Scatter(x=dataframe["datetime"], y=dataframe["SMA25_dr"], name="SMA25_%", mode="lines", line=dict(color="magenta")),
+        row=5, col=1
+    )
+    # fig.add_trace(
+    #     go.Scatter(x=dataframe["datetime"], y=dataframe["SMA50_乖離率"], name="SMA50_%", mode="lines", line=dict(color="blue")),
+    #     row=5, col=1
+    # )
+    fig.add_trace(
+        go.Scatter(x=dataframe["datetime"], y=dataframe["SMA200_dr"], name="SMA200_%", mode="lines", line=dict(color="green")),
+        row=5, col=1
+    )
+
     # Layout
     fig.update_layout(
+        plot_bgcolor="white",
         title={
             "text": f"Daily chart of {stock_code}",
-            "y":0.9,
-            "x":0.5,
+            "y": 0.9,
+            "x": 0.5,
         },
-        height=600,
+        width=2000,
+        height=1000,
     )
 
     # y軸名を定義
-    fig.update_yaxes(title_text="Prices", row=1, col=1, separatethousands=True)
-    fig.update_yaxes(title_text="MACD", row=2, col=1, separatethousands=True)
-    fig.update_yaxes(title_text="RSI", row=3, col=1, separatethousands=True)
-    fig.update_yaxes(title_text="Vol", row=4, col=1, separatethousands=True)
+    fig.update_yaxes(title_text="Prices", row=1, col=1, separatethousands=True, showline=True, linewidth=1, linecolor="lightgrey", color="grey")
+    fig.update_yaxes(title_text="MACD", row=2, col=1, separatethousands=True, showline=True, linewidth=1, linecolor="lightgrey", color="grey")
+    fig.update_yaxes(title_text="RSI", row=3, col=1, separatethousands=True, showline=True, linewidth=1, linecolor="lightgrey", color="grey")
+    fig.update_yaxes(title_text="Vol", row=4, col=1, separatethousands=True, showline=True, linewidth=1, linecolor="lightgrey", color="grey")
+    fig.update_yaxes(title_text="%", row=5, col=1, separatethousands=True, showline=True, linewidth=1, linecolor="lightgrey", color="grey")
 
     # 不要な日付を非表示にする
     fig.update_xaxes(
+        showline=True, linewidth=1, linecolor="lightgrey", color="grey",
         rangebreaks=[dict(values=d_breaks)],
         tickformat='%Y/%m/%d',
     )
@@ -385,13 +415,13 @@ def generate_csv_from_dataframe():
 
         return df
 
-    # yahoo_finance_api2で過去2年分の株価を取得する
+    # yahoo_finance_api2で過去5年分の株価を取得する
     my_share = share.Share(stock_code)
     symbol_data = None
 
     try:
         symbol_data = my_share.get_historical(
-            share.PERIOD_TYPE_YEAR, 2,
+            share.PERIOD_TYPE_YEAR, 5,
             share.FREQUENCY_TYPE_DAY, 1)
     except YahooFinanceError as e:
         print(e.message)
@@ -446,6 +476,15 @@ def generate_csv_from_dataframe():
 
     # 25日移動平均線
     df["SMA25"] = df["close"].rolling(window=25).mean()
+    # 50日移動平均線
+    df["SMA50"] = df["close"].rolling(window=50).mean()
+    # 200日移動平均線
+    df["SMA200"] = df["close"].rolling(window=200).mean()
+
+    # 移動平均線乖離率 Deviation Ratio
+    df["SMA25_dr"] = ((df["close"] / df["SMA25"]) - 1) * 100
+    df["SMA50_dr"] = ((df["close"] / df["SMA50"]) - 1) * 100
+    df["SMA200_dr"] = ((df["close"] / df["SMA200"]) - 1) * 100
 
     # 標準偏差
     df["std"] = df["close"].rolling(window=25).std()
@@ -462,8 +501,11 @@ def generate_csv_from_dataframe():
     # RSIを算出
     df = rsi(df)
 
+    df.index = pd.to_datetime(df["datetime"], format="%Y-%m-%d").values
+    df = df[two_year_ago : today]
+
     # 非表示にする日付をリストアップ
-    d_all = pd.date_range(start=df['datetime'].iloc[0],end=df['datetime'].iloc[-1])
+    d_all = pd.date_range(start=df['datetime'].iloc[0], end=df['datetime'].iloc[-1])
     d_obs = [d.strftime("%Y-%m-%d") for d in df['datetime']]
     d_breaks = [d for d in d_all.strftime("%Y-%m-%d").tolist() if d not in d_obs]
 
