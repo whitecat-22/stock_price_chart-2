@@ -1,7 +1,7 @@
 Cycler
 Pillow
 awslambdaric
-cPython
+#cPython
 certifi
 chardet
 idna
@@ -22,3 +22,4 @@ aiohttp
 yahoo_finance_api2
 kaleido==0.1.0
 plotly
+yfinance

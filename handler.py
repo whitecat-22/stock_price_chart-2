@@ -15,8 +15,7 @@ import time
 import json
 import logging
 from decimal import Decimal, ROUND_HALF_UP
-from yahoo_finance_api2 import share
-from yahoo_finance_api2.exceptions import YahooFinanceError
+import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -110,32 +109,42 @@ class Slack():
         :param dict[str, str, str, str, str, str] ohlcv:
         :type ohlcv: {
             "datetime": "2020-12-29",
-            "open": "7620",
-            "high": "8070",
-            "low": "7610",
-            "close": "8060",
-            "volume": "823700"
+            "Open": "7620",
+            "High": "8070",
+            "Low": "7610",
+            "Close": "8060",
+            "Adj Close": "8060",
+            "Volume": "823700"
         }
         :return: String
         """
-        open_ = Decimal(str(ohlcv["open"])).quantize(
+        print(ohlcv)
+        open_ = Decimal(str(ohlcv["Open"])).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP)
-        high_ = Decimal(str(ohlcv["high"])).quantize(
+        high_ = Decimal(str(ohlcv["High"])).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP)
-        low_ = Decimal(str(ohlcv["low"])).quantize(
+        low_ = Decimal(str(ohlcv["Low"])).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP)
-        close_ = Decimal(str(ohlcv["close"])).quantize(
+        close_ = Decimal(str(ohlcv["Close"])).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP)
+        day_before_ = Decimal(str(ohlcv["day_before"])).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if day_before_ > 0:
+            day_before_str_ = f"（前日比  ＋{str(day_before_)}円）"
+        elif day_before_ == 0:
+            day_before_str_ = f"（前日比  ±{str(day_before_)}円）"
+        else:  # if day_before_ < 0:
+            day_before_str_ = f"（前日比  ▲{str(day_before_)}円）"
 
         text = f"本日は{self.date.strftime('%Y年%m月%d日')}です。\n" \
                f"取得可能な最新日付の株価情報をお知らせします。 \n\n"\
                f"*銘柄*  {str(stock_code)}\n" \
-               f"*日付*  {ohlcv['date']}\n" \
-               f"*始値*  {str(open_)}\n" \
-               f"*高値*  {str(high_)}\n" \
-               f"*安値*  {str(low_)}\n" \
-               f"*終値*  {str(close_)}\n" \
-               f"*出来高*  {float(ohlcv['volume'])}"
+               f"*日付*  {ohlcv['datetime']}\n" \
+               f"*始値*  {str(open_)}円\n" \
+               f"*高値*  {str(high_)}円\n" \
+               f"*安値*  {str(low_)}円\n" \
+               f"*終値*  {str(close_)}円  {day_before_str_}\n" \
+               f"*出来高*  {float(ohlcv['Volume'])}"
         return text
 
     def post(self):
@@ -187,32 +196,41 @@ class Twitter():
         :param dict[str, str, str, str, str, str] ohlcv:
         :type ohlcv: {
             "datetime": "2020-12-29",
-            "open": "7620",
-            "high": "8070",
-			"low": "7610",
-			"close": "8060",
-			"volume": "823700"
+            "Open": "7620",
+            "High": "8070",
+            "Low": "7610",
+            "Close": "8060",
+            "Adj Close": "8060",
+            "Volume": "823700"
         }
         :return: String
         """
-        open_ = Decimal(str(ohlcv["open"])).quantize(
+        open_ = Decimal(str(ohlcv["Open"])).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP)
-        high_ = Decimal(str(ohlcv["high"])).quantize(
+        high_ = Decimal(str(ohlcv["High"])).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP)
-        low_ = Decimal(str(ohlcv["low"])).quantize(
+        low_ = Decimal(str(ohlcv["Low"])).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP)
-        close_ = Decimal(str(ohlcv["close"])).quantize(
+        close_ = Decimal(str(ohlcv["Close"])).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP)
+        day_before_ = Decimal(str(ohlcv["day_before"])).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if day_before_ > 0:
+            day_before_str_ = f"（前日比  ＋{str(day_before_)}円）"
+        elif day_before_ == 0:
+            day_before_str_ = f"（前日比  ±{str(day_before_)}円）"
+        else:  # if day_before_ < 0:
+            day_before_str_ = f"（前日比  ▲{str(day_before_)}円）"
 
         text = f"本日は{self.date.strftime('%Y年%m月%d日')}です。\n" \
                f"取得可能な最新日付の株価情報をお知らせします。 \n\n"\
                f"銘柄  {str(stock_code)}\n" \
-               f"日付  {ohlcv['date']}\n" \
-               f"始値  {str(open_)}\n" \
-               f"高値  {str(high_)}\n" \
-               f"安値  {str(low_)}\n" \
-               f"終値  {str(close_)}\n" \
-               f"出来高  {float(ohlcv['volume'])}"
+               f"日付  {ohlcv['datetime']}\n" \
+               f"始値  {str(open_)}円\n" \
+               f"高値  {str(high_)}円\n" \
+               f"安値  {str(low_)}円\n" \
+               f"終値  {str(close_)}円  {day_before_str_}\n" \
+               f"出来高  {float(ohlcv['Volume'])}"
         return text
 
     def post(self):
@@ -256,7 +274,7 @@ def generate_stock_chart_image(df, d_breaks):
 
     # ローソク足：Candlestick
     fig.add_trace(
-        go.Candlestick(x=dataframe["datetime"], open=dataframe["open"], high=dataframe["high"], low=dataframe["low"], close=dataframe["close"], name="Prices"),
+        go.Candlestick(x=dataframe["datetime"], open=dataframe["Open"], high=dataframe["High"], low=dataframe["Low"], close=dataframe["Close"], name="Prices"),
         row=1, col=1
     )
 
@@ -309,9 +327,9 @@ def generate_stock_chart_image(df, d_breaks):
     # m50, s50 = dataframe["SMA50_dr"].mean(), dataframe["SMA50_dr"].std()
     # m00, s200 = dataframe["SMA200_dr"].mean(), dataframe["SMA200_dr"].std()
     # 買われすぎ
-    # fig.add_trace(go.Scatter(x=dataframe[dataframe["SMA25_dr"]>(m25+(2*s25))]["datetime"], y=dataframe[dataframe["SMA25_dr"]>(m25+(2*s25))]["close"]*1.02, name="買われすぎ", mode="markers", marker_symbol="triangle-down", marker_size=5, marker_color="black"), row=1, col=1)
+    # fig.add_trace(go.Scatter(x=dataframe[dataframe["SMA25_dr"]>(m25+(2*s25))]["datetime"], y=dataframe[dataframe["SMA25_dr"]>(m25+(2*s25))]["Close"]*1.02, name="買われすぎ", mode="markers", marker_symbol="triangle-down", marker_size=5, marker_color="black"), row=1, col=1)
     # 売られすぎ
-    # fig.add_trace(go.Scatter(x=dataframe[dataframe["SMA25_dr"]<(m25-(2*s25))]["datetime"], y=dataframe[dataframe["SMA25_dr"]<(m25-(2*s25))]["close"]*0.98, name="売られすぎ", mode="markers", marker_symbol="triangle-up", marker_size=5, marker_color="black"), row=1, col=1)
+    # fig.add_trace(go.Scatter(x=dataframe[dataframe["SMA25_dr"]<(m25-(2*s25))]["datetime"], y=dataframe[dataframe["SMA25_dr"]<(m25-(2*s25))]["Close"]*0.98, name="売られすぎ", mode="markers", marker_symbol="triangle-up", marker_size=5, marker_color="black"), row=1, col=1)
 
 
     # MACD
@@ -327,7 +345,7 @@ def generate_stock_chart_image(df, d_breaks):
 
     # 出来高
     fig.add_trace(
-        go.Bar(x=dataframe["datetime"], y=dataframe["volume"], name="Volume", marker_color="green"),
+        go.Bar(x=dataframe["datetime"], y=dataframe["Volume"], name="Volume", marker_color="green"),
         row=4, col=1
     )
 
@@ -389,13 +407,13 @@ def generate_csv_from_dataframe():
         FastEMA_period = 12  # 短期EMAの期間
         SlowEMA_period = 26  # 長期EMAの期間
         SignalSMA_period = 9  # SMAを取る期間
-        df["MACD"] = df["close"].ewm(span=FastEMA_period).mean() - df["close"].ewm(span=SlowEMA_period).mean()
+        df["MACD"] = df["Close"].ewm(span=FastEMA_period).mean() - df["Close"].ewm(span=SlowEMA_period).mean()
         df["Signal"] = df["MACD"].rolling(SignalSMA_period).mean()
         return df
 
     def rsi(df):
         # 前日との差分を計算
-        df_diff = df["close"].diff(1)
+        df_diff = df["Close"].diff(1)
 
         # 計算用のDataFrameを定義
         df_up, df_down = df_diff.copy(), df_diff.copy()
@@ -415,21 +433,11 @@ def generate_csv_from_dataframe():
 
         return df
 
-    # yahoo_finance_api2で過去5年分の株価を取得する
-    my_share = share.Share(stock_code)
-    symbol_data = None
+    # yfinanceで過去5年分の株価を取得する
+    df = yf.download(stock_code, period= "5y", interval = "1d")
+    df["day_before"] = df["Close"].diff(1)
+    df["datetime"] = pd.to_datetime(df.index, unit="ms")
 
-    try:
-        symbol_data = my_share.get_historical(
-            share.PERIOD_TYPE_YEAR, 5,
-            share.FREQUENCY_TYPE_DAY, 1)
-    except YahooFinanceError as e:
-        print(e.message)
-        sys.exit(1)
-
-    df = pd.DataFrame(symbol_data)
-    df["datetime"] = pd.to_datetime(df.timestamp, unit="ms")
-    df["date"] = df["datetime"].dt.strftime("%Y-%m-%d")
     # APIで取得したデータを一旦CSVファイルにする
     df1 = df.copy()
     df1 = df1.sort_values(by="datetime", ascending=False)
@@ -450,15 +458,14 @@ def generate_csv_from_dataframe():
         pd.DataFrame(additional_dates, columns=["datetime"])
     ], ignore_index=True)
 
-
     # 基準線
-    high26 = df["high"].rolling(window=26).max()
-    low26 = df["low"].rolling(window=26).min()
+    high26 = df["High"].rolling(window=26).max()
+    low26 = df["Low"].rolling(window=26).min()
     df["base_line"] = (high26 + low26) / 2
 
     # 転換線
-    high9 = df["high"].rolling(window=9).max()
-    low9 = df["low"].rolling(window=9).min()
+    high9 = df["High"].rolling(window=9).max()
+    low9 = df["Low"].rolling(window=9).min()
     df["conversion_line"] = (high9 + low9) / 2
 
     # 先行スパン1
@@ -466,28 +473,28 @@ def generate_csv_from_dataframe():
     df["leading_span1"] = leading_span1.shift(25)
 
     # 先行スパン2
-    high52 = df["high"].rolling(window=52).max()
-    low52 = df["low"].rolling(window=52).min()
+    high52 = df["High"].rolling(window=52).max()
+    low52 = df["Low"].rolling(window=52).min()
     leading_span2 = (high52 + low52) / 2
     df["leading_span2"] = leading_span2.shift(25)
 
     # 遅行スパン
-    df["lagging_span"] = df["close"].shift(-25)
+    df["lagging_span"] = df["Close"].shift(-25)
 
     # 25日移動平均線
-    df["SMA25"] = df["close"].rolling(window=25).mean()
+    df["SMA25"] = df["Close"].rolling(window=25).mean()
     # 50日移動平均線
-    df["SMA50"] = df["close"].rolling(window=50).mean()
+    df["SMA50"] = df["Close"].rolling(window=50).mean()
     # 200日移動平均線
-    df["SMA200"] = df["close"].rolling(window=200).mean()
+    df["SMA200"] = df["Close"].rolling(window=200).mean()
 
     # 移動平均線乖離率 Deviation Ratio
-    df["SMA25_dr"] = ((df["close"] / df["SMA25"]) - 1) * 100
-    df["SMA50_dr"] = ((df["close"] / df["SMA50"]) - 1) * 100
-    df["SMA200_dr"] = ((df["close"] / df["SMA200"]) - 1) * 100
+    df["SMA25_dr"] = ((df["Close"] / df["SMA25"]) - 1) * 100
+    df["SMA50_dr"] = ((df["Close"] / df["SMA50"]) - 1) * 100
+    df["SMA200_dr"] = ((df["Close"] / df["SMA200"]) - 1) * 100
 
     # 標準偏差
-    df["std"] = df["close"].rolling(window=25).std()
+    df["std"] = df["Close"].rolling(window=25).std()
 
     # ボリンジャーバンド
     df["2upper"] = df["SMA25"] + (2 * df["std"])
@@ -505,8 +512,8 @@ def generate_csv_from_dataframe():
     df = df[two_year_ago : today]
 
     # 非表示にする日付をリストアップ
-    d_all = pd.date_range(start=df['datetime'].iloc[0], end=df['datetime'].iloc[-1])
-    d_obs = [d.strftime("%Y-%m-%d") for d in df['datetime']]
+    d_all = pd.date_range(start=df["datetime"].iloc[0], end=df["datetime"].iloc[-1])
+    d_obs = [d.strftime("%Y-%m-%d") for d in df["datetime"]]
     d_breaks = [d for d in d_all.strftime("%Y-%m-%d").tolist() if d not in d_obs]
 
     return [df, d_breaks, is_today]
