@@ -1,10 +1,10 @@
 # stock_price_chart-2
 
-## 指定した銘柄の株価（直近から6ヶ月前まで）を yahoo_finance_api2 により取得し、作成した株価と出来高のチャートを平日の定刻(JST 15:30) ＜※但し、取引所休場日を除く※＞ にSlack/twitterへ定刻で通知します。
+## 指定した銘柄の株価（直近から6ヶ月前まで）を yfinance により取得し、作成した株価と出来高のチャートを平日の定刻(JST 15:30) ＜※但し、取引所休場日を除く※＞ にSlack/twitterへ定刻で通知します。
 
 - 銘柄：　　　　　日経平均株価([^N225](https://finance.yahoo.com/quote/%5EN225/history?p=%5EN225))　　　　　←環境変数にて設定
 
-- データソース：　[https://finance.yahoo.com/](https://finance.yahoo.com/)　　　←株価情報の取得は [yahoo_finance_api2](https://github.com/pkout/yahoo_finance_api2)を利用  
+- データソース：　[https://finance.yahoo.com/](https://finance.yahoo.com/)　　　←株価情報の取得は [yfinance](https://github.com/ranaroussi/yfinance)を利用  
 
 　
 
@@ -41,7 +41,7 @@
 ### ◆主な利用ライブラリ：
 
 - [pandas](https://pandas.pydata.org/)
-- [yahoo_finance_api2](https://github.com/pkout/yahoo_finance_api2)
+- [yfinance](https://github.com/ranaroussi/yfinance)
 - [plotly](https://plotly.com/python/)
 - [slack-sdk](https://slack.dev/python-slack-sdk/)
 - [tweepy](https://www.tweepy.org/)
