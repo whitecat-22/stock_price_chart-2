@@ -10,7 +10,6 @@ import csv
 import datetime
 import os
 from os.path import join, dirname
-import sys
 import time
 import json
 import logging
@@ -118,7 +117,6 @@ class Slack():
         }
         :return: String
         """
-        print(ohlcv)
         open_ = Decimal(str(ohlcv["Open"])).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP)
         high_ = Decimal(str(ohlcv["High"])).quantize(
@@ -130,11 +128,11 @@ class Slack():
         day_before_ = Decimal(str(ohlcv["day_before"])).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP)
         if day_before_ > 0:
-            day_before_str_ = f"（前日比  ＋{str(day_before_)}円）"
+            day_before_str_ = f"（前日比  ＋{str(abs(day_before_))}円）"
         elif day_before_ == 0:
-            day_before_str_ = f"（前日比  ±{str(day_before_)}円）"
+            day_before_str_ = f"（前日比  ±{str(abs(day_before_))}円）"
         else:  # if day_before_ < 0:
-            day_before_str_ = f"（前日比  ▲{str(day_before_)}円）"
+            day_before_str_ = f"（前日比  ▲{str(abs(day_before_))}円）"
 
         text = f"本日は{self.date.strftime('%Y年%m月%d日')}です。\n" \
                f"取得可能な最新日付の株価情報をお知らせします。 \n\n"\
@@ -216,11 +214,11 @@ class Twitter():
         day_before_ = Decimal(str(ohlcv["day_before"])).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP)
         if day_before_ > 0:
-            day_before_str_ = f"（前日比  ＋{str(day_before_)}円）"
+            day_before_str_ = f"（前日比  ＋{str(abs(day_before_))}円）"
         elif day_before_ == 0:
-            day_before_str_ = f"（前日比  ±{str(day_before_)}円）"
+            day_before_str_ = f"（前日比  ±{str(abs(day_before_))}円）"
         else:  # if day_before_ < 0:
-            day_before_str_ = f"（前日比  ▲{str(day_before_)}円）"
+            day_before_str_ = f"（前日比  ▲{str(abs(day_before_))}円）"
 
         text = f"本日は{self.date.strftime('%Y年%m月%d日')}です。\n" \
                f"取得可能な最新日付の株価情報をお知らせします。 \n\n"\
